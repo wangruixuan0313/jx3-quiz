@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>大唐山门试帖</title>
+    <meta
+      name="description"
+      content="一个以剑网3门派气质为灵感的原创人格问卷，测试你的江湖性情与归属门派。"
+    >
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="ambient ambient-left" aria-hidden="true"></div>
+      <div class="ambient ambient-right" aria-hidden="true"></div>
+      <div class="grain" aria-hidden="true"></div>
+
+      <main class="app-frame">
+        <header class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">原创世界观化人格问卷</p>
+            <h1>大唐山门试帖</h1>
+            <p class="hero-lead">
+              这不是门规背诵，也不是剧情复写。它把你放进二十二段风雨里，看你如何取舍秩序、情义、锋芒与隐忍，最后给出最契合的江湖归处。
+            </p>
+            <div class="hero-meta">
+              <span>20 个门派结果</span>
+              <span>22 道原创情境题</span>
+              <span>桌面端 / 手机端均可完成</span>
+            </div>
+          </div>
+
+          <aside class="hero-panel">
+            <p class="panel-title">门派映照</p>
+            <div class="sect-cloud" id="sectCloud"></div>
+            <p class="panel-note">
+              题面为原创情境，灵感参考
+              <a href="https://wiki.biligame.com/jx3/" target="_blank" rel="noreferrer">剑网3 Wiki 门派条目</a>
+              中的门派介绍与思想气质。
+            </p>
+          </aside>
+        </header>
+
+        <section class="intro-card" id="introCard">
+          <div class="intro-grid">
+            <div>
+              <p class="card-kicker">卷首</p>
+              <h2>先留下你的江湖称呼</h2>
+              <p class="card-copy">
+                名字可以是真名、角色名，或你此刻想用的称呼。结果页会按这个名字落款。
+              </p>
+            </div>
+
+            <form class="intro-form" id="startForm">
+              <label class="field">
+                <span>江湖称呼</span>
+                <input
+                  id="playerName"
+                  name="playerName"
+                  type="text"
+                  maxlength="20"
+                  placeholder="例如：青崖、阿雪、闻笛"
+                  autocomplete="off"
+                >
+              </label>
+
+              <button class="primary-button" type="submit">启卷</button>
+              <p class="helper-copy">
+                默认以“少侠”落款。答题过程中可返回上一题修改，不会丢失已选内容。
+              </p>
+            </form>
+          </div>
+        </section>
+
+        <section class="quiz-shell hidden" id="quizShell" aria-live="polite">
+          <div class="progress-row">
+            <div>
+              <p class="card-kicker">行路中</p>
+              <h2 id="questionStage">第一程</h2>
+            </div>
+            <div class="progress-meta">
+              <span id="progressLabel">01 / 22</span>
+              <div class="progress-track" aria-hidden="true">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+            </div>
+          </div>
+
+          <article class="question-card">
+            <div class="question-frame">
+              <p class="question-scene" id="questionScene"></p>
+              <h3 id="questionPrompt"></h3>
+              <p class="question-context" id="questionContext"></p>
+            </div>
+
+            <div class="options-grid" id="optionsGrid"></div>
+          </article>
+
+          <div class="nav-row">
+            <button class="ghost-button" id="backButton" type="button">上一题</button>
+            <p class="nav-note">点击选项会自动前进，最后一题会直接出结果。</p>
+          </div>
+        </section>
+
+        <section class="result-shell hidden" id="resultShell" aria-live="polite">
+          <div class="result-hero" id="resultHero">
+            <div class="result-main">
+              <p class="eyebrow">归处既定</p>
+              <p class="result-nameplate" id="resultNameplate"></p>
+              <h2 id="resultSectName"></h2>
+              <p class="result-subtitle" id="resultSectTitle"></p>
+              <p class="result-summary" id="resultSummary"></p>
+
+              <div class="result-tags" id="resultTags"></div>
+
+              <div class="quote-card">
+                <p class="quote-mark">签</p>
+                <p id="resultVerse"></p>
+              </div>
+            </div>
+
+            <aside class="result-side">
+              <div class="crest-card">
+                <p class="panel-title">门派印记</p>
+                <p class="crest-text" id="resultCrest"></p>
+                <div class="score-badge">
+                  <span>契合度</span>
+                  <strong id="resultPercent"></strong>
+                </div>
+              </div>
+
+              <div class="ranking-card">
+                <p class="panel-title">同调门派</p>
+                <div class="ranking-list" id="rankingList"></div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="result-grid">
+            <section class="analysis-card">
+              <div class="section-head">
+                <p class="card-kicker">性情图谱</p>
+                <h3>你的江湖轮廓</h3>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="radarChart" width="420" height="420"></canvas>
+              </div>
+              <div class="axis-grid" id="axisGrid"></div>
+            </section>
+
+            <section class="analysis-card">
+              <div class="section-head">
+                <p class="card-kicker">判语</p>
+                <h3>为什么会落在这里</h3>
+              </div>
+              <p class="persona-copy" id="personaCopy"></p>
+              <p class="shadow-copy" id="shadowCopy"></p>
+              <div class="reason-list" id="reasonList"></div>
+
+              <div class="role-card">
+                <p class="panel-title">你在队伍里的位置</p>
+                <strong id="resultRole"></strong>
+              </div>
+            </section>
+          </div>
+
+          <div class="actions-row">
+            <button class="ghost-button" id="restartButton" type="button">重走一遍</button>
+            <a class="source-link" href="https://wiki.biligame.com/jx3/" target="_blank" rel="noreferrer">
+              查看灵感来源
+            </a>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
