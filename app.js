@@ -524,739 +524,240 @@ const SECTS = [
   },
 ];
 
+const LORE_BY_SECT = {
+  shaolin: { loreLine: "从禅宗祖庭到乱世武僧，你更像少林在‘慈悲与杀伐并存’里的那条硬线。", loreHooks: ["禅宗祖庭", "十三棍僧", "大光明寺之变"] },
+  wanhua: { loreLine: "你更贴近万花‘避世并非避责’的路数，在风雅与医理之间做长期选择。", loreHooks: ["万花七圣", "群贤聚谷", "岐黄与百艺并修"] },
+  qixiu: { loreLine: "你与七秀的同频点不在外表柔美，而在‘情义判断与锋芒节拍’。", loreHooks: ["公孙剑舞", "七秀十三钗", "碧霞神令"] },
+  chunyang: { loreLine: "你的取舍像纯阳的山门逻辑：先修心法，再问胜负。", loreHooks: ["吕洞宾立派", "谢云流与李忘生", "三才化道"] },
+  tiance: { loreLine: "你的路径更像天策在边军岁月里的选择：先顶住，再谈漂亮。", loreHooks: ["东都之狼", "府军制", "战线与号令"] },
+  cangjian: { loreLine: "你落在藏剑并非只因名门，而是‘礼与锋并存’的家学取向。", loreHooks: ["名剑大会", "铸剑传承", "山庄门风"] },
+  wuxian: { loreLine: "你更接近五仙‘与自然共生而非征服自然’的处世方式。", loreHooks: ["苗疆教脉", "虫蛊医毒", "族群守护"] },
+  tangmen: { loreLine: "你的核心像唐门：边界、精度、后手，重于情绪表达。", loreHooks: ["机关暗器", "堡内家法", "秘谱与暗线"] },
+  mingjiao: { loreLine: "你与明教同频于‘信念驱动的组织动员’，不是单纯热血。", loreHooks: ["圣火体系", "荒漠东归", "教众凝聚"] },
+  gaibang: { loreLine: "你更像丐帮的江湖肌理：路感、义气、临场破局。", loreHooks: ["污衣净衣", "帮会江湖网", "行路与济困"] },
+  cangyun: { loreLine: "你和苍云最像的地方是‘长期扛压’，不是一时冲锋。", loreHooks: ["玄甲守关", "边塞军堡", "盾墙体系"] },
+  changge: { loreLine: "你更贴近长歌‘以礼乐控场，以文骨定调’的门派逻辑。", loreHooks: ["门内雅集", "琴剑同修", "文脉与局势"] },
+  badao: { loreLine: "你与霸刀共振于‘北地家法+强执行’，该断时不留尾巴。", loreHooks: ["北地山庄", "三刀体系", "家门纪律"] },
+  penglai: { loreLine: "你像蓬莱的海上思维：高度机动、远距视野、节奏轻快。", loreHooks: ["海外仙山叙事", "云舟海路", "高机动战法"] },
+  lingxue: { loreLine: "你更接近凌雪‘在阴影里执行秩序’的职业伦理。", loreHooks: ["密令体系", "京畿暗线", "不记功簿"] },
+  yantian: { loreLine: "你的选择方式像衍天：先看因果链，再定落子点。", loreHooks: ["观星推演", "术数框架", "前瞻判断"] },
+  yaozong: { loreLine: "你更接近北天药宗的长期修复观：先理解生命，再谈效率。", loreHooks: ["雪域本草", "药理传承", "群体疗愈"] },
+  daozong: { loreLine: "你和刀宗的契合点在‘硬练硬解’，不靠花招换结果。", loreHooks: ["绝壁试锋", "刀路重构", "体魄与心志并锻"] },
+  wanling: { loreLine: "你与万灵同频在‘生命连接感’，擅长让系统重新有呼吸。", loreHooks: ["灵兽契约", "山庄共生", "护生取向"] },
+  duanshi: { loreLine: "你贴合段氏‘家学礼制与实战责任并行’的中轴路线。", loreHooks: ["世家门训", "府学传承", "朝野缓冲角色"] },
+};
+
+SECTS.forEach((sect) => {
+  if (LORE_BY_SECT[sect.id]) {
+    Object.assign(sect, LORE_BY_SECT[sect.id]);
+  }
+});
+
+const LORE_JSON_PATH = "./wiki_sect_notes_enriched.json";
+const LORE_MECHANIC_HEADINGS = ["门派武学", "门派心法", "门派阵法", "门派称号", "门派诗", "门派领地", "门派专长"];
+
+function compactText(text) {
+  return (text || "").replace(/\s+/g, " ").trim();
+}
+
+function shortSnippet(text, maxLength = 68) {
+  const compact = compactText(text);
+  if (!compact) {
+    return "";
+  }
+  return compact.length > maxLength ? `${compact.slice(0, maxLength)}…` : compact;
+}
+
+function buildSectLoreFromProfile(profile, sect) {
+  const loreSections = profile.lore_sections || {};
+  const story = profile.story || profile.intro || "";
+  const faith = profile.faith || "";
+  const timeline = profile.timeline || "";
+  const fullText = profile.full_text_excerpt || "";
+
+  const headings = Object.keys(loreSections).filter((heading) => !LORE_MECHANIC_HEADINGS.some((name) => heading.includes(name)));
+  const headingHooks = headings.slice(0, 3).map((heading) => heading.replace(/^【|】$/g, ""));
+  const canonicalHooks = Array.from(new Set([...(profile.hooks || []), ...headingHooks])).slice(0, 4);
+
+  const narrativeSource = [story, faith, timeline, fullText].find((item) => compactText(item).length > 24) || "";
+  const narrative = shortSnippet(narrativeSource, 86);
+
+  const extraReasons = [];
+  if (narrative) {
+    extraReasons.push(`你与「${sect.name}」的契合点，更多落在其江湖叙事：${narrative}`);
+  }
+  if (faith) {
+    extraReasons.push(`在价值排序上，你更接近这一门派的处世框架：${shortSnippet(faith, 64)}`);
+  }
+  if (timeline) {
+    extraReasons.push(`你的选项分布有明显“长期线索”，这和该门派的大事脉络同频。`);
+  }
+
+  return {
+    loreHooks: canonicalHooks.length ? canonicalHooks : sect.loreHooks || [],
+    loreLine: narrative ? `你的落点也呼应了该门派的一条核心叙事线：${narrative}` : sect.loreLine || "",
+    loreReasons: extraReasons.slice(0, 2),
+    loreExcerpt: shortSnippet([story, faith, timeline].join(" "), 120),
+  };
+}
+
+async function loadLoreProfiles() {
+  try {
+    const response = await fetch(LORE_JSON_PATH, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`load lore failed with status ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.warn("Failed to load lore profiles, fallback to built-in copy.", error);
+    return null;
+  }
+}
+
+function enrichSectsWithLore(profilesByName) {
+  if (!profilesByName) {
+    return;
+  }
+
+  SECTS.forEach((sect) => {
+    const profile = profilesByName[sect.name];
+    if (!profile || !profile.ok) {
+      return;
+    }
+    const lore = buildSectLoreFromProfile(profile, sect);
+    sect.loreHooks = lore.loreHooks;
+    sect.loreLine = lore.loreLine;
+    sect.loreExcerpt = lore.loreExcerpt;
+    sect.reasons = [...(sect.reasons || []), ...lore.loreReasons].slice(0, 4);
+  });
+}
+
+function enrichSectsProfileMetrics() {
+  SECTS.forEach((sect) => {
+    const squares = AXES.reduce((sum, axis) => sum + (sect.profile[axis.key] || 0) ** 2, 0);
+    const magnitude = Math.sqrt(squares / AXES.length);
+    sect.profileMagnitude = magnitude;
+  });
+}
+
+enrichSectsProfileMetrics();
+
+
+function bOption(title, text, axes, affinity) {
+  return { title, text, axes, affinity };
+}
+
+function bQuestion(scene, prompt, context, left, right) {
+  return { scene, prompt, context, options: [left, right] };
+}
+
 const QUESTIONS = [
-  {
-    stage: "第一程",
-    scene: "夜雨驿站",
-    prompt: "风雨里同时来了一个负伤陌生人，和一封催你即刻上路的急令。",
-    context:
-      "驿灯只够照亮半间屋，马也只剩一匹。你知道拖延可能坏事，但把人关在门外，大概率也是一条命。",
-    options: [
-      {
-        title: "先把人接进来",
-        text: "让对方避雨止血，哪怕明晨得自己去解释误时。",
-        axes: { compassion: 2, faith: 1, freedom: 1, kinship: 1 },
-        affinity: { qixiu: 1, wanhua: 1, wanling: 1, yaozong: 1 },
-      },
-      {
-        title: "先验明真假",
-        text: "不急着选边，先查伤势、口供与脚印，看谁在说实话。",
-        axes: { discipline: 1, secrecy: 1, culture: 1 },
-        affinity: { tangmen: 1, yantian: 1, changge: 1 },
-      },
-      {
-        title: "急令优先",
-        text: "先把命令送到该到的人手里，再调头回来处理这里。",
-        axes: { discipline: 2, ferocity: 1, kinship: 1 },
-        affinity: { tiance: 1, cangyun: 1, lingxue: 1 },
-      },
-      {
-        title: "两边都按住",
-        text: "不让陌生人乱走，也不立刻离开，先把这个夜守过去。",
-        axes: { secrecy: 2, discipline: 1, ferocity: 1 },
-        affinity: { lingxue: 1, tangmen: 1, badao: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第二程",
-    scene: "残卷入手",
-    prompt: "你得了一门只剩半篇的绝学，继续练下去可能大成，也可能彻底走偏。",
-    context:
-      "所有人都说它值钱，只有你知道，真正麻烦的是它会把人练成什么样。",
-    options: [
-      {
-        title: "先修心，再碰锋",
-        text: "宁可进展慢一点，也要确保自己不被这门技艺反过来牵着走。",
-        axes: { discipline: 2, faith: 1, secrecy: 1 },
-        affinity: { chunyang: 1, shaolin: 1, daozong: 1 },
-      },
-      {
-        title: "拆开来重读",
-        text: "把它当成一道题，逐句辨义，缺的地方自己补到能自圆其说。",
-        axes: { culture: 2, discipline: 1, freedom: 1 },
-        affinity: { wanhua: 1, yantian: 1, changge: 1 },
-      },
-      {
-        title: "直接拿去试",
-        text: "真正的刀理拳理，终究要在实战和身体里见真章。",
-        axes: { ferocity: 2, freedom: 1, faith: 1 },
-        affinity: { tiance: 1, badao: 1, daozong: 1, gaibang: 1 },
-      },
-      {
-        title: "向天地借答案",
-        text: "去山水、草木、虫兽和风里找印证，让身体慢慢和它磨合。",
-        axes: { freedom: 2, compassion: 1, secrecy: 1 },
-        affinity: { wuxian: 1, penglai: 1, wanling: 1, yaozong: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第三程",
-    scene: "闹市当场",
-    prompt: "有人在众目睽睽下羞辱你的同伴，话里带刺，专挑旧伤口揭。",
-    context:
-      "动手很容易，收场很难；咽下去很容易，之后却未必还看得起自己。",
-    options: [
-      {
-        title: "用更漂亮的话顶回去",
-        text: "不必先失礼，但也绝不让对方占尽气势。",
-        axes: { culture: 2, ferocity: 1 },
-        affinity: { qixiu: 1, changge: 1, duanshi: 1 },
-      },
-      {
-        title: "记住这笔账",
-        text: "此刻不翻桌，但会让对方在最该疼的地方明白代价。",
-        axes: { secrecy: 2, discipline: 1 },
-        affinity: { tangmen: 1, lingxue: 1, badao: 1 },
-      },
-      {
-        title: "直接挡上去",
-        text: "场面要乱也先从你这里乱，别让话继续往同伴身上落。",
-        axes: { ferocity: 2, kinship: 1 },
-        affinity: { tiance: 1, cangyun: 1, gaibang: 1 },
-      },
-      {
-        title: "先看人，再看话",
-        text: "你会先判断对方是不是在借恶意遮自己的伤，再决定怎么处置。",
-        axes: { compassion: 2, faith: 1 },
-        affinity: { shaolin: 1, wanhua: 1, yaozong: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第四程",
-    scene: "瘴村急病",
-    prompt: "一座边村忽然爆出疫病，药材、人手和时间都不够。",
-    context:
-      "你不能什么都救，但你选的优先级会决定很多人的命。",
-    options: [
-      {
-        title: "先保最弱的人",
-        text: "老人、孩子、重症优先，先把最容易断掉的线接上。",
-        axes: { compassion: 2, faith: 1 },
-        affinity: { shaolin: 1, yaozong: 1, wanhua: 1 },
-      },
-      {
-        title: "先立秩序",
-        text: "分区、轮值、隔离、配给，先让混乱停下来。",
-        axes: { discipline: 2, kinship: 1 },
-        affinity: { cangyun: 1, tiance: 1, shaolin: 1 },
-      },
-      {
-        title: "先追病源",
-        text: "水、虫、伤口、食物，全都得回头查，堵不住源头只是拖。",
-        axes: { secrecy: 1, culture: 1, compassion: 1, freedom: 1 },
-        affinity: { wuxian: 1, yantian: 1, tangmen: 1, yaozong: 1 },
-      },
-      {
-        title: "先教他们自救",
-        text: "你会留下一套能自己运转的方法，而不只留一时的援手。",
-        axes: { freedom: 2, culture: 1, compassion: 1 },
-        affinity: { wanhua: 1, chunyang: 1, gaibang: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第五程",
-    scene: "旧友失信",
-    prompt: "一个你很看重的人背叛了约定，但你知道他背后另有苦衷。",
-    context:
-      "事情已经坏了，接下来考验的是你如何定义‘自己人’与‘底线’。",
-    options: [
-      {
-        title: "先把人保下来",
-        text: "局后再算账，但在眼下你仍会站在他身前。",
-        axes: { kinship: 2, compassion: 1 },
-        affinity: { wanhua: 1, qixiu: 1, mingjiao: 1, wanling: 1 },
-      },
-      {
-        title: "可以理解，不代表不罚",
-        text: "你会给理由，但不给第二次伤人的机会。",
-        axes: { discipline: 1, faith: 1, ferocity: 1 },
-        affinity: { cangjian: 1, duanshi: 1, shaolin: 1 },
-      },
-      {
-        title: "任务先于情分",
-        text: "先把该做的事做完，再谈此人还值不值得留。",
-        axes: { secrecy: 2, ferocity: 1, discipline: 1 },
-        affinity: { lingxue: 1, tangmen: 1, badao: 1 },
-      },
-      {
-        title: "逼他把话说清",
-        text: "你不急着判他死罪，想先看这份苦衷值不值得替他说话。",
-        axes: { freedom: 1, culture: 1, compassion: 1, faith: 1 },
-        affinity: { chunyang: 1, changge: 1, yantian: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第六程",
-    scene: "十年孤守",
-    prompt: "有人要你去守一处不见天日的要地，十年之内不得成名，也很难离开。",
-    context:
-      "这不是没意义的苦差，只是意义大多不会落在你自己身上。",
-    options: [
-      {
-        title: "我守",
-        text: "只要这件事确实重要，名字不写在自己身上也无妨。",
-        axes: { faith: 1, discipline: 2, kinship: 1 },
-        affinity: { cangyun: 1, lingxue: 1, shaolin: 1 },
-      },
-      {
-        title: "我守，但为人守",
-        text: "如果它能护住一城一地，我认这个苦。",
-        axes: { compassion: 1, ferocity: 1, kinship: 1, faith: 1 },
-        affinity: { tiance: 1, mingjiao: 1, wanling: 1 },
-      },
-      {
-        title: "我不适合被钉死",
-        text: "你更适合在流动中发挥作用，守一处会先把你守坏。",
-        axes: { freedom: 2, culture: 1 },
-        affinity: { penglai: 1, gaibang: 1, wanhua: 1 },
-      },
-      {
-        title: "换一种守法",
-        text: "你会把这件事改成一个能被后人接力的系统，而不是押一人十年。",
-        axes: { secrecy: 1, discipline: 1, culture: 1, kinship: 1 },
-        affinity: { changge: 1, tangmen: 1, chunyang: 1, yantian: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第七程",
-    scene: "江湖名声",
-    prompt: "如果终有一天你会被人记住，你最希望别人因为什么提起你？",
-    context:
-      "名声不是目的，但它会暴露你真正把什么看得最重。",
-    options: [
-      {
-        title: "最难时靠得住",
-        text: "不是最耀眼，但别人最想把命交给你。",
-        axes: { compassion: 2, kinship: 1 },
-        affinity: { shaolin: 1, cangyun: 1, wanhua: 1, yaozong: 1 },
-      },
-      {
-        title: "一招一意都难忘",
-        text: "你希望技艺、姿态和锋芒能留下长久回响。",
-        axes: { ferocity: 2, culture: 1 },
-        affinity: { cangjian: 1, qixiu: 1, badao: 1, daozong: 1 },
-      },
-      {
-        title: "把那条线守住了",
-        text: "你想留下的是职责被完成，而不是个人传奇。",
-        axes: { discipline: 2, faith: 1 },
-        affinity: { tiance: 1, cangyun: 1, chunyang: 1 },
-      },
-      {
-        title: "比别人更早看懂局",
-        text: "你希望自己是那个看见走势、挪开祸根的人。",
-        axes: { secrecy: 1, culture: 1, faith: 1 },
-        affinity: { yantian: 1, tangmen: 1, changge: 1, lingxue: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第八程",
-    scene: "失控坐骑",
-    prompt: "山路上，一头受惊又带伤的猛兽朝人群冲来。",
-    context:
-      "它此刻很危险，但你也看得出它不是纯粹在发疯。",
-    options: [
-      {
-        title: "先稳住它",
-        text: "用呼吸、站位和缓动作先把它从狂态里带出来。",
-        axes: { compassion: 1, freedom: 1, culture: 1 },
-        affinity: { wanling: 1, wuxian: 1, penglai: 1 },
-      },
-      {
-        title: "先打停",
-        text: "在人伤更多之前，必须以最快速度把它压制住。",
-        axes: { ferocity: 2, discipline: 1 },
-        affinity: { tiance: 1, badao: 1, daozong: 1 },
-      },
-      {
-        title: "先看伤和毒",
-        text: "也许不是兽性失控，而是别的东西正在驱使它。",
-        axes: { compassion: 1, secrecy: 1, culture: 1 },
-        affinity: { yaozong: 1, wanhua: 1, tangmen: 1, wuxian: 1 },
-      },
-      {
-        title: "借地形困住",
-        text: "你会把它引到更可控的位置，而不是原地硬接。",
-        axes: { secrecy: 2, freedom: 1 },
-        affinity: { lingxue: 1, tangmen: 1, yantian: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第九程",
-    scene: "朝与野之间",
-    prompt: "朝廷命令与江湖道义撞在一起时，你通常先站哪边？",
-    context:
-      "不是每次都真能两全，这题问的是你骨子里的优先级。",
-    options: [
-      {
-        title: "先看法度",
-        text: "有制度总比人人自说自话强，哪怕它不总是完美。",
-        axes: { discipline: 2, kinship: 1 },
-        affinity: { tiance: 1, lingxue: 1, duanshi: 1, cangyun: 1 },
-      },
-      {
-        title: "先看百姓",
-        text: "谁先在受苦，答案就先偏向谁。",
-        axes: { compassion: 2, freedom: 1 },
-        affinity: { gaibang: 1, mingjiao: 1, wanhua: 1, wanling: 1 },
-      },
-      {
-        title: "先看师门和本心",
-        text: "不是谁官更大，而是谁更合你认的那条道。",
-        axes: { faith: 2, kinship: 1, discipline: 1 },
-        affinity: { shaolin: 1, chunyang: 1, badao: 1, cangjian: 1 },
-      },
-      {
-        title: "先找第三条路",
-        text: "能不能不硬选其一，而是把代价拆开、让两边都少坏一点。",
-        axes: { culture: 1, secrecy: 1, faith: 1, compassion: 1 },
-        affinity: { changge: 1, yantian: 1, qixiu: 1, duanshi: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第十程",
-    scene: "理想居处",
-    prompt: "如果让你长住，你最想把自己的日子安放在什么地方？",
-    context:
-      "环境会暴露人的底色，也会养出人的做事方式。",
-    options: [
-      {
-        title: "山门与钟声",
-        text: "最好有风、有石阶、有能让心慢慢沉下去的清处。",
-        axes: { discipline: 1, faith: 1, secrecy: 1, culture: 1 },
-        affinity: { chunyang: 1, shaolin: 1, daozong: 1 },
-      },
-      {
-        title: "水阁与书卷",
-        text: "有琴、有茶、有花木，也有人愿意在这里谈心。",
-        axes: { culture: 2, compassion: 1, freedom: 1 },
-        affinity: { qixiu: 1, wanhua: 1, changge: 1, duanshi: 1 },
-      },
-      {
-        title: "营地与城头",
-        text: "要看得见人来人往，也看得见自己为什么守在这里。",
-        axes: { kinship: 2, discipline: 1, ferocity: 1 },
-        affinity: { tiance: 1, cangyun: 1, mingjiao: 1 },
-      },
-      {
-        title: "崖海与山林",
-        text: "最好离天和野都近一点，能听见风、潮或兽鸣。",
-        axes: { freedom: 2, secrecy: 1, compassion: 1 },
-        affinity: { penglai: 1, wuxian: 1, wanling: 1, yaozong: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第十一程",
-    scene: "异兆将临",
-    prompt: "天象怪异、卜兆纷乱，身边人都来问你该不该信。",
-    context:
-      "你对“看不见的东西”抱什么态度，会影响很多决定。",
-    options: [
-      {
-        title: "信手里这点真本事",
-        text: "比起天意，你更相信练出来的判断和当下能做的事。",
-        axes: { discipline: 2, ferocity: 1 },
-        affinity: { tiance: 1, daozong: 1, badao: 1 },
-      },
-      {
-        title: "兆象也是语言",
-        text: "可以参考，但必须带着敬畏去解，不可乱读。",
-        axes: { culture: 2, faith: 1, secrecy: 1 },
-        affinity: { yantian: 1, chunyang: 1, changge: 1 },
-      },
-      {
-        title: "先看人心被它牵成什么样",
-        text: "比天象本身更要紧的，是众人因此做出了什么。",
-        axes: { compassion: 1, faith: 1, culture: 1 },
-        affinity: { shaolin: 1, qixiu: 1, duanshi: 1 },
-      },
-      {
-        title: "让山川草木先说话",
-        text: "你会去看气味、气候、鸟兽和药性先变了什么。",
-        axes: { freedom: 1, secrecy: 1, compassion: 1, culture: 1 },
-        affinity: { wuxian: 1, wanling: 1, yaozong: 1, penglai: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第十二程",
-    scene: "最后一问",
-    prompt: "如果为了守住你认定的路，必须主动失去一样东西，你选什么？",
-    context:
-      "没有谁能什么都要。这题其实在问，你最舍不得放弃的不是哪样，而是哪样之后剩下的自己。",
-    options: [
-      {
-        title: "名声",
-        text: "被误解也行，不被记得也行，只要事情做成。",
-        axes: { secrecy: 2, faith: 1 },
-        affinity: { lingxue: 1, tangmen: 1, cangyun: 1 },
-      },
-      {
-        title: "安稳",
-        text: "你宁可一直在路上，也不想把自己活得太钝。",
-        axes: { freedom: 2, ferocity: 1 },
-        affinity: { gaibang: 1, penglai: 1, mingjiao: 1 },
-      },
-      {
-        title: "锋芒",
-        text: "若能让更多人活下来，没必要把最亮的那一刀留给自己。",
-        axes: { compassion: 2, discipline: 1 },
-        affinity: { shaolin: 1, yaozong: 1, wanhua: 1, wanling: 1 },
-      },
-      {
-        title: "迟疑",
-        text: "一旦选定，就别回头，哪怕接下来要多扛很多。",
-        axes: { ferocity: 2, kinship: 1, faith: 1 },
-        affinity: { tiance: 1, badao: 1, daozong: 1, mingjiao: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第十三程",
-    scene: "劫镖之夜",
-    prompt: "你提前一天得知有人要劫镖，同行却坚持按原计划走明路。",
-    context:
-      "你只有一次决策窗口。改线会得罪人，不改线可能死人。",
-    options: [
-      {
-        title: "强行改线",
-        text: "先保活口，不接受把侥幸当策略。",
-        axes: { discipline: 3, ferocity: 2, compassion: 1, freedom: -1 },
-        affinity: { cangyun: 1, tiance: 1, badao: 1, daozong: 1 },
-      },
-      {
-        title: "暗里设伏",
-        text: "明面不改，暗线先布，让劫镖的人自己撞进来。",
-        axes: { secrecy: 3, discipline: 1, ferocity: 1, compassion: -1 },
-        affinity: { tangmen: 1, lingxue: 1, yantian: 1 },
-      },
-      {
-        title: "放话震慑",
-        text: "先把消息放出去，逼对方退意，少打一场是最好。",
-        axes: { culture: 1, faith: 2, ferocity: -2, secrecy: -1 },
-        affinity: { changge: 1, qixiu: 1, duanshi: 1, shaolin: 1 },
-      },
-      {
-        title: "照计划走",
-        text: "你相信风险本就是路的一部分，不愿因风声自乱阵脚。",
-        axes: { freedom: 2, ferocity: 1, discipline: -2, secrecy: -1 },
-        affinity: { gaibang: 1, penglai: 1, mingjiao: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第十四程",
-    scene: "门规之辩",
-    prompt: "师门旧规明显压制新人，你被推去主持是否修规。",
-    context:
-      "守旧能稳，改制会痛，但继续拖会让更多人沉默离开。",
-    options: [
-      {
-        title: "先守规",
-        text: "乱改比坏规更危险，先把秩序稳住。",
-        axes: { discipline: 3, kinship: 1, freedom: -2, compassion: -1 },
-        affinity: { chunyang: 1, cangyun: 1, daozong: 1 },
-      },
-      {
-        title: "立刻改规",
-        text: "错就是错，不该再拿传统给它背书。",
-        axes: { freedom: 2, compassion: 2, ferocity: 2, discipline: -2 },
-        affinity: { mingjiao: 1, gaibang: 1, wanhua: 1 },
-      },
-      {
-        title: "试点过渡",
-        text: "先开一条新路，用结果让反对者闭嘴。",
-        axes: { culture: 2, secrecy: 1, discipline: 1, compassion: 1 },
-        affinity: { changge: 1, yantian: 1, duanshi: 1 },
-      },
-      {
-        title: "带人另起",
-        text: "不在烂结构里消耗，直接带愿意的人换场子。",
-        axes: { freedom: 3, kinship: 1, discipline: -3, faith: 1 },
-        affinity: { penglai: 1, wuxian: 1, wanhua: 1, gaibang: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第十五程",
-    scene: "赎人与赎城",
-    prompt: "你只能二选一：救回被俘的师兄，或守住将被焚毁的粮仓。",
-    context:
-      "两边都真，任何选择都会留下怨与债。",
-    options: [
-      {
-        title: "先救人",
-        text: "人若没了，守住的东西也迟早会失去意义。",
-        axes: { compassion: 3, kinship: 2, faith: 1, discipline: -2 },
-        affinity: { qixiu: 1, wanling: 1, wanhua: 1, yaozong: 1 },
-      },
-      {
-        title: "先守城",
-        text: "守住粮仓能救更多人，这笔账必须冷着算。",
-        axes: { discipline: 3, compassion: -2, ferocity: 1, kinship: -1 },
-        affinity: { tiance: 1, cangyun: 1, badao: 1, tangmen: 1 },
-      },
-      {
-        title: "诈敌换时",
-        text: "放出假消息拖住敌方，争出同时处理两边的窗口。",
-        axes: { secrecy: 3, culture: 1, ferocity: 1, faith: -1 },
-        affinity: { lingxue: 1, tangmen: 1, yantian: 1 },
-      },
-      {
-        title: "先问其志",
-        text: "若师兄愿意以身殉局，你会尊重他的选择先救城。",
-        axes: { faith: 3, culture: 1, compassion: 1, ferocity: -1 },
-        affinity: { shaolin: 1, chunyang: 1, changge: 1, duanshi: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第十六程",
-    scene: "敌营来降",
-    prompt: "敌营副将深夜来降，要求你立刻信任并给他兵权。",
-    context:
-      "你看得出他真有苦衷，但也可能是最精巧的一次投毒。",
-    options: [
-      {
-        title: "先收后验",
-        text: "先让人进来，但关键权限全部锁住。",
-        axes: { secrecy: 2, discipline: 2, compassion: 1, kinship: -1 },
-        affinity: { tangmen: 1, lingxue: 1, cangjian: 1 },
-      },
-      {
-        title: "先拒再观",
-        text: "不拿全局做赌注，先让时间证明他的立场。",
-        axes: { discipline: 3, compassion: -1, ferocity: -1, freedom: -1 },
-        affinity: { cangyun: 1, badao: 1, daozong: 1 },
-      },
-      {
-        title: "当场重用",
-        text: "危局里最缺敢投命的人，你愿意先给他机会。",
-        axes: { faith: 3, freedom: 1, kinship: 1, secrecy: -2 },
-        affinity: { mingjiao: 1, gaibang: 1, tiance: 1 },
-      },
-      {
-        title: "试忠一役",
-        text: "给他一场高风险但可控的任务，成则信，败则止。",
-        axes: { ferocity: 2, discipline: 1, secrecy: 1, compassion: -1 },
-        affinity: { tiance: 1, yantian: 1, cangjian: 1, lingxue: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第十七程",
-    scene: "禁术换命",
-    prompt: "你有一门禁术，能救重伤同伴，但施术者会永久失去一项天赋。",
-    context:
-      "没人逼你，所有人都在等你先开口。",
-    options: [
-      {
-        title: "我来承担",
-        text: "命先救回来，代价放在自己身上。",
-        axes: { compassion: 3, kinship: 2, faith: 1, ferocity: -1 },
-        affinity: { shaolin: 1, yaozong: 1, wanling: 1, qixiu: 1 },
-      },
-      {
-        title: "拒绝禁术",
-        text: "不能用失序的方法去救秩序，宁可换别的路。",
-        axes: { discipline: 3, faith: 1, compassion: -1, freedom: -1 },
-        affinity: { chunyang: 1, daozong: 1, cangyun: 1 },
-      },
-      {
-        title: "代价共担",
-        text: "拆成多人分担的慢疗，不让任何一个人独吞代价。",
-        axes: { kinship: 2, culture: 1, compassion: 2, secrecy: -1 },
-        affinity: { wanhua: 1, changge: 1, duanshi: 1 },
-      },
-      {
-        title: "换敌人偿",
-        text: "你会把这笔代价转成对敌方的精确追偿。",
-        axes: { ferocity: 3, secrecy: 2, compassion: -2, freedom: 0 },
-        affinity: { tangmen: 1, lingxue: 1, badao: 1, tiance: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第十八程",
-    scene: "盛宴局中局",
-    prompt: "你在宴席上识破主办者正在借酒布局，想挑起三方仇杀。",
-    context:
-      "你若当场掀桌，可能血溅席间；你若沉默，后患更大。",
-    options: [
-      {
-        title: "当场掀桌",
-        text: "立刻斩断节奏，哪怕自己先背锅。",
-        axes: { ferocity: 3, faith: 1, secrecy: -2, culture: -1 },
-        affinity: { badao: 1, tiance: 1, gaibang: 1 },
-      },
-      {
-        title: "借词换局",
-        text: "你会改写话题和席面秩序，把刀从酒里抽出来。",
-        axes: { culture: 3, secrecy: 1, ferocity: -2, discipline: 1 },
-        affinity: { changge: 1, qixiu: 1, duanshi: 1 },
-      },
-      {
-        title: "暗记证据",
-        text: "先让局面过线，后续连根拔起，不给对手洗白机会。",
-        axes: { secrecy: 3, discipline: 2, compassion: -1, ferocity: 1 },
-        affinity: { tangmen: 1, lingxue: 1, yantian: 1 },
-      },
-      {
-        title: "私下示警",
-        text: "你优先保全被利用的一方，先让无辜的人退场。",
-        axes: { compassion: 2, kinship: 1, freedom: 1, ferocity: -1 },
-        affinity: { wanhua: 1, wanling: 1, yaozong: 1, shaolin: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第十九程",
-    scene: "海上风暴",
-    prompt: "船队突遇风暴，你必须在保货与保人之间立刻下令。",
-    context:
-      "慢一刻就两边都没了。你不会有时间开会。",
-    options: [
-      {
-        title: "弃货保人",
-        text: "东西能再挣，人命没得重来。",
-        axes: { compassion: 3, freedom: 1, discipline: -1, kinship: 1 },
-        affinity: { penglai: 1, yaozong: 1, wanhua: 1, wanling: 1 },
-      },
-      {
-        title: "分仓冒险",
-        text: "你会极限分配资源，让人和货都保住一部分。",
-        axes: { discipline: 2, secrecy: 1, culture: 1, compassion: 0 },
-        affinity: { cangjian: 1, yantian: 1, changge: 1, duanshi: 1 },
-      },
-      {
-        title: "以阵抗风",
-        text: "不弃不退，强行顶过浪头，赌的是全员执行力。",
-        axes: { discipline: 3, ferocity: 2, freedom: -2, kinship: 1 },
-        affinity: { cangyun: 1, tiance: 1, daozong: 1 },
-      },
-      {
-        title: "转险借势",
-        text: "你会借风改航线，把危局变成甩开追兵的机会。",
-        axes: { freedom: 3, secrecy: 1, ferocity: 1, discipline: -2 },
-        affinity: { penglai: 1, mingjiao: 1, gaibang: 1, wuxian: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第二十程",
-    scene: "孤城谣言",
-    prompt: "城内谣言四起，说你们私吞赈粮。你有证据，但公开会暴露线人。",
-    context:
-      "眼下名声在塌，沉默会继续掉血，公开会断暗线。",
-    options: [
-      {
-        title: "公开证据",
-        text: "短痛换长稳，先把百姓信心拉回来。",
-        axes: { secrecy: -3, culture: 1, compassion: 1, faith: 1 },
-        affinity: { qixiu: 1, changge: 1, duanshi: 1, gaibang: 1 },
-      },
-      {
-        title: "护住线人",
-        text: "宁愿暂时背锅，也不让暗线断在自己手里。",
-        axes: { secrecy: 3, discipline: 1, compassion: -1, faith: 1 },
-        affinity: { lingxue: 1, tangmen: 1, cangyun: 1 },
-      },
-      {
-        title: "制造反证",
-        text: "你会借舆论反向钓出幕后推手，一次拔净。",
-        axes: { secrecy: 2, ferocity: 2, culture: 1, compassion: -2 },
-        affinity: { tangmen: 1, yantian: 1, badao: 1 },
-      },
-      {
-        title: "开仓自证",
-        text: "直接把余粮按户派下去，让事实替你说话。",
-        axes: { compassion: 2, kinship: 1, discipline: -1, freedom: 1 },
-        affinity: { tiance: 1, shaolin: 1, wanhua: 1, mingjiao: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第二十一程",
-    scene: "师承之争",
-    prompt: "两位前辈都想收你为徒，一位重心法，一位重杀伐。",
-    context:
-      "你只能选一条主路，另一条会暂时关闭。",
-    options: [
-      {
-        title: "拜心法一脉",
-        text: "你先要一个能长期约束自己的框架。",
-        axes: { discipline: 2, faith: 2, ferocity: -2, freedom: -1 },
-        affinity: { chunyang: 1, shaolin: 1, changge: 1 },
-      },
-      {
-        title: "拜杀伐一脉",
-        text: "先把胜负手练出来，再谈其余。",
-        axes: { ferocity: 3, discipline: 1, compassion: -2, culture: -1 },
-        affinity: { daozong: 1, badao: 1, tiance: 1 },
-      },
-      {
-        title: "双脉并修",
-        text: "你会硬吃更高成本，不愿提前放弃任何一个维度。",
-        axes: { culture: 2, discipline: 1, freedom: 1, secrecy: 1 },
-        affinity: { cangjian: 1, yantian: 1, duanshi: 1, wanhua: 1 },
-      },
-      {
-        title: "暂不拜师",
-        text: "你想先走自己的路，再决定把谁请进来。",
-        axes: { freedom: 3, kinship: -2, discipline: -1, faith: 1 },
-        affinity: { penglai: 1, gaibang: 1, wuxian: 1, mingjiao: 1 },
-      },
-    ],
-  },
-  {
-    stage: "第二十二程",
-    scene: "封卷题",
-    prompt: "若你的一生只能在“成名、成事、成人”里保住两样，你舍哪一样？",
-    context:
-      "答案没有标准，但会把你的江湖底色逼出来。",
-    options: [
-      {
-        title: "舍成名",
-        text: "你更在乎事情和自己，名声可有可无。",
-        axes: { secrecy: 2, faith: 2, culture: -1, compassion: 1 },
-        affinity: { lingxue: 1, tangmen: 1, cangyun: 1, shaolin: 1 },
-      },
-      {
-        title: "舍成事",
-        text: "若成事必须违背本心，你宁可不成。",
-        axes: { faith: 3, compassion: 2, ferocity: -2, discipline: -1 },
-        affinity: { chunyang: 1, shaolin: 1, qixiu: 1, wanling: 1 },
-      },
-      {
-        title: "舍成人",
-        text: "你接受自己变硬，只要能把关键局面赢下来。",
-        axes: { ferocity: 3, discipline: 2, compassion: -3, secrecy: 1 },
-        affinity: { badao: 1, daozong: 1, tiance: 1, tangmen: 1 },
-      },
-      {
-        title: "都不舍，代价我扛",
-        text: "你会把代价推给未来的自己，不愿提前删去任何可能。",
-        axes: { freedom: 2, kinship: 1, culture: 1, discipline: -1 },
-        affinity: { wanhua: 1, mingjiao: 1, penglai: 1, cangjian: 1 },
-      },
-    ],
-  },
+  bQuestion("稻香村", "村里新收上来的米袋只够两日。", "账房把户帖和伤簿一起推到你手边，等你定分法。", bOption("按户帖分粮", "", { discipline: 2, kinship: 1 }, { shaolin: 1, cangyun: 1, duanshi: 1 }), bOption("按伤簿分粮", "", { compassion: 2, faith: 1 }, { wanhua: 1, yaozong: 1, wanling: 1 })),
+  bQuestion("长安·西市", "两拨人把坊口堵了个严实。", "巡街的人还没到，摊贩和行人都在看你先怎么处理。", bOption("留在场中断事", "", { faith: 1, culture: 1, secrecy: -1 }, { changge: 1, duanshi: 1, shaolin: 1 }), bOption("把人带离拆事", "", { secrecy: 1, compassion: 1, kinship: 1 }, { qixiu: 1, gaibang: 1, wanling: 1 })),
+  bQuestion("洛阳·天街", "有人递来一封火漆未冷的信。", "封角压着旧印，落款却只写了一个时辰。", bOption("拆封先看来意", "", { freedom: 1, secrecy: 1, ferocity: 1 }, { tangmen: 1, lingxue: 1, yantian: 1 }), bOption("封口转呈上手", "", { discipline: 2, secrecy: 1 }, { cangyun: 1, shaolin: 1, duanshi: 1 })),
+  bQuestion("扬州·码头", "子时一过，两路人同时来借你的人手。", "一边要保明早船期，一边要稳渡口夜宿。", bOption("保住明早船期", "", { discipline: 1, culture: 1 }, { cangjian: 1, duanshi: 1, tangmen: 1 }), bOption("稳住渡口夜宿", "", { compassion: 2, kinship: 1 }, { wanhua: 1, yaozong: 1, gaibang: 1 })),
+  bQuestion("洛道", "路边捡到一块带血的旧教腰牌。", "前头连着旧路，后头能折回官道把消息递出去。", bOption("顺旧线继续查", "", { ferocity: 1, secrecy: 1 }, { lingxue: 1, tangmen: 1, tiance: 1 }), bOption("先把消息送回", "", { discipline: 1, freedom: 1 }, { yantian: 1, cangyun: 1, duanshi: 1 })),
+  bQuestion("枫华谷", "谷边还困着一批伤者。", "断桥未修，官道远却稳，山路近却险。", bOption("走官道慢出谷", "", { ferocity: 1, freedom: 1 }, { tiance: 1, badao: 1, daozong: 1 }), bOption("走山路快出谷", "", { discipline: 2, secrecy: 1 }, { cangyun: 1, tangmen: 1, yantian: 1 })),
+  bQuestion("瞿塘峡", "栈道口只够你接一份委托。", "一份押着时限，一份续着后路。", bOption("先护押契物", "", { discipline: 1, faith: 1 }, { duanshi: 1, cangjian: 1, changge: 1 }), bOption("先护续命药", "", { compassion: 2, freedom: 1 }, { wanhua: 1, yaozong: 1, wanling: 1 })),
+  bQuestion("昆仑", "雪线上有人来借营。", "风口一合就要封路，帐位只够先给一边。", bOption("先核来路再分帐", "", { secrecy: 1, discipline: 2 }, { tangmen: 1, lingxue: 1, cangyun: 1 }), bOption("先开帐位再核来路", "", { compassion: 2, faith: 1 }, { mingjiao: 1, gaibang: 1, yaozong: 1 })),
+  bQuestion("龙门荒漠", "驼队的水囊不够撑到下一口井。", "水要怎么拆，眼下就得定。", bOption("按人数均分水囊", "", { discipline: 2, kinship: 1 }, { cangyun: 1, shaolin: 1, duanshi: 1 }), bOption("按路程重分水囊", "", { ferocity: 1, freedom: 1, compassion: -1 }, { badao: 1, daozong: 1, tiance: 1 })),
+  bQuestion("黑戈壁", "一队商旅被本地人拦在营外。", "他们只想借旧商道过沙，却没人肯替他们开口。", bOption("替商旅接本地线", "", { compassion: 1, kinship: 1, culture: 1 }, { mingjiao: 1, changge: 1, gaibang: 1 }), bOption("教商旅另开新线", "", { secrecy: 1, discipline: 1 }, { tangmen: 1, yantian: 1, lingxue: 1 })),
+  bQuestion("万花谷", "旧册旁多了一张还没入案的新方。", "它见效更快，但还没过谷中共议。", bOption("记案后先试新方", "", { culture: 1, freedom: 1, compassion: 1 }, { wanhua: 1, yaozong: 1, yantian: 1 }), bOption("共议后再试新方", "", { discipline: 2, compassion: 1 }, { shaolin: 1, chunyang: 1, cangyun: 1 })),
+  bQuestion("七秀坊", "开宴前一刻，主舞忽然伤了腕。", "楼船已满，乐声却没停。", bOption("照旧节拍补位", "", { discipline: 1, culture: 1 }, { qixiu: 1, changge: 1, duanshi: 1 }), bOption("临场改拍补位", "", { freedom: 1, compassion: 1, culture: 1 }, { qixiu: 1, wanhua: 1, penglai: 1 })),
+  bQuestion("藏剑山庄", "新出炉的名剑只够一名弟子先试。", "剑庐里有人看门序，有人看贴手。", bOption("按门序先试剑", "", { discipline: 2, kinship: 1 }, { cangjian: 1, duanshi: 1, badao: 1 }), bOption("按贴手先试剑", "", { ferocity: 1, freedom: 1 }, { daozong: 1, tiance: 1, gaibang: 1 })),
+  bQuestion("纯阳宫", "新弟子想越过入门课直接去论剑坪。", "悟性不差，但次第未满。", bOption("先允越阶习剑", "", { freedom: 1, faith: 1, discipline: -1 }, { penglai: 1, mingjiao: 1, wanhua: 1 }), bOption("仍按次第习剑", "", { discipline: 2, faith: 1 }, { chunyang: 1, shaolin: 1, daozong: 1 })),
+  bQuestion("少林寺", "晨钟响过，出勤仍旧稀落。", "是把课次重新立紧，还是把修行交回各院。", bOption("重立晨课课次", "", { discipline: 2, faith: 1 }, { shaolin: 1, chunyang: 1, cangyun: 1 }), bOption("分院各自修课", "", { freedom: 2, culture: 1 }, { wanhua: 1, penglai: 1, gaibang: 1 })),
+  bQuestion("天策府", "演武场临时缺一名授课助教。", "你要在完整示范和拆讲关键之间选一种教法。", bOption("先演整套枪路", "", { discipline: 2, ferocity: 1 }, { tiance: 1, daozong: 1, badao: 1 }), bOption("先拆关键用法", "", { culture: 1, compassion: 1, kinship: 1 }, { cangyun: 1, wanhua: 1, changge: 1 })),
+  bQuestion("黑龙沼", "旧祭坛边挖出一册残谱。", "一边想辨其用途，一边想先把它封住。", bOption("收谱回看用途", "", { freedom: 1, compassion: 1, faith: -1 }, { wuxian: 1, mingjiao: 1, wanhua: 1 }), bOption("封谱暂不流转", "", { faith: 2, discipline: 1, secrecy: 1 }, { wuxian: 1, yaozong: 1, tangmen: 1 })),
+  bQuestion("成都·唐家集", "外门弟子求你开一次核心机关课。", "门外挤满了人，内堡催得也紧。", bOption("开外堂分层讲", "", { culture: 1, secrecy: 1, discipline: 1 }, { tangmen: 1, changge: 1, cangjian: 1 }), bOption("留内堡小范围授", "", { secrecy: 2, discipline: 1 }, { tangmen: 1, lingxue: 1, cangyun: 1 })),
+  bQuestion("明教总坛", "分坛礼仪与总坛旧规起了冲撞。", "要么收成一式，要么容它因地而变。", bOption("分坛一体行礼", "", { faith: 2, kinship: 1, discipline: 1 }, { mingjiao: 1, shaolin: 1, cangyun: 1 }), bOption("分坛因地行礼", "", { freedom: 2, compassion: 1 }, { mingjiao: 1, gaibang: 1, penglai: 1 })),
+  bQuestion("洞庭湖", "帮中有人借旧名头接私单。", "账怎么拆、线怎么断，要你先定。", bOption("当众核账断单", "", { discipline: 2, faith: 1, kinship: -1 }, { duanshi: 1, shaolin: 1, tangmen: 1 }), bOption("私下拆账分线", "", { secrecy: 2, kinship: 1 }, { gaibang: 1, lingxue: 1, mingjiao: 1 })),
+  bQuestion("苍云堡", "补给只够先顾一边。", "前沿营口和全堡冬储，二者只能先保其一。", bOption("先补前沿营口", "", { ferocity: 1, discipline: 1, kinship: -1 }, { tiance: 1, badao: 1, tangmen: 1 }), bOption("先补全堡冬储", "", { kinship: 2, compassion: 1, discipline: 1 }, { cangyun: 1, shaolin: 1, gaibang: 1 })),
+  bQuestion("长歌门", "旧谱与新编争了一夜。", "席上只差你一句话决定明日开席用哪一版。", bOption("仍按旧谱开席", "", { culture: 2, discipline: 1 }, { changge: 1, duanshi: 1, qixiu: 1 }), bOption("改用新编开席", "", { freedom: 2, compassion: 1, culture: -1 }, { qixiu: 1, penglai: 1, mingjiao: 1 })),
+  bQuestion("霸刀山庄", "旁支弟子想改修另一条刀路。", "庄规没写死，但众人都在看你先站哪边。", bOption("仍守原脉刀路", "", { discipline: 2, faith: 1 }, { badao: 1, duanshi: 1, cangjian: 1 }), bOption("允许转修新路", "", { freedom: 2, compassion: 1 }, { wanhua: 1, penglai: 1, mingjiao: 1 })),
+  bQuestion("蓬莱", "你拿到一张还没入册的新海图。", "要不要立刻把它并进现有档册。", bOption("海图暂缓入档", "", { secrecy: 2, freedom: 1, ferocity: 1 }, { penglai: 1, tangmen: 1, lingxue: 1 }), bOption("海图并入公档", "", { culture: 1, compassion: 1, kinship: 1 }, { changge: 1, duanshi: 1, mingjiao: 1 })),
+  bQuestion("凌雪阁", "线已经咬住，但证据还差最后一环。", "你得定是先收口，还是先补齐链路。", bOption("先收口再补证", "", { ferocity: 2, discipline: 1 }, { lingxue: 1, badao: 1, tiance: 1 }), bOption("先补证再收口", "", { secrecy: 2, culture: 1, ferocity: -1 }, { yantian: 1, tangmen: 1, duanshi: 1 })),
+  bQuestion("衍天宗", "你要交一份趋势判断。", "盘上还有变量，但各方已经等着听话。", bOption("给出单一定盘", "", { discipline: 1, faith: 1, secrecy: 1 }, { yantian: 1, tiance: 1, cangyun: 1 }), bOption("给出区间判断", "", { culture: 2, secrecy: 1, faith: -1 }, { yantian: 1, changge: 1, tangmen: 1 })),
+  bQuestion("北天药宗", "药引只够先压一条线。", "要么先救最重的个体，要么先切会蔓开的那条线。", bOption("先压个体重症", "", { compassion: 2, kinship: 1 }, { yaozong: 1, wanhua: 1, wanling: 1 }), bOption("先压群体扩散", "", { discipline: 2, secrecy: 1, compassion: -1 }, { tangmen: 1, cangyun: 1, yantian: 1 })),
+  bQuestion("刀宗", "新刀路有一套快成型的简架。", "能更快出招，但不如正架扎实。", bOption("先用简架成招", "", { ferocity: 1, freedom: 1, discipline: -1 }, { daozong: 1, mingjiao: 1, gaibang: 1 }), bOption("先按正架打底", "", { discipline: 2, faith: 1 }, { daozong: 1, chunyang: 1, shaolin: 1 })),
+  bQuestion("万灵山庄", "灵兽始终不肯入训。", "要先把契限写清，还是先把相处养熟。", bOption("先立契限", "", { discipline: 2, ferocity: 1, compassion: -1 }, { cangyun: 1, badao: 1, daozong: 1 }), bOption("先养默契", "", { compassion: 2, kinship: 1 }, { wanling: 1, wuxian: 1, qixiu: 1 })),
+  bQuestion("南屏山", "一场敏感会面要在山口开席。", "旧礼、座次和现场局势，不可能全都顾到。", bOption("按旧礼制排席", "", { culture: 2, discipline: 1, kinship: 1 }, { duanshi: 1, changge: 1, cangjian: 1 }), bOption("按现场局势排席", "", { freedom: 1, compassion: 1, culture: -1 }, { gaibang: 1, mingjiao: 1, penglai: 1 })),
+];
+
+const QUESTION_ECHOES = [
+  ["先把份额定清", "先把急缓分清"],
+  ["愿意留在场中定分寸", "更愿意把冲突先拆开"],
+  ["先把来意看明白", "先把流程守清楚"],
+  ["先护住已定下的时序", "先稳住眼前这一摊人"],
+  ["会沿着旧线往里查", "会先把消息送回去"],
+  ["宁肯走稳一点", "宁肯抢快一点"],
+  ["先保已经押下的约", "先保还能续上的路"],
+  ["先确认边界", "先腾出缓冲"],
+  ["先讲平", "先讲效率"],
+  ["愿意替人把线接上", "更愿意替人换条线"],
+  ["愿意边试边记", "愿意先把规程补齐"],
+  ["先守原来的拍子", "先顺现场改节奏"],
+  ["先看次序", "先看手感"],
+  ["愿意给天分开口", "更在意根基完整"],
+  ["先把课次立住", "先把修行放开"],
+  ["更相信整套示范", "更相信拆开讲清"],
+  ["想先看明白再定", "想先封住再说"],
+  ["愿意把学路分出去", "更愿意把核心收回来"],
+  ["更看重一体", "更看重在地"],
+  ["会把账摊开", "会把线拆开"],
+  ["先补最前面的口子", "先补最长线的底盘"],
+  ["更愿意守住旧格", "更愿意把门风往前推"],
+  ["更像守住门里的线", "更像给人换条线"],
+  ["想先把图握住", "想先把图摊开"],
+  ["会先收口", "会先补链"],
+  ["更愿意给一个答案", "更愿意给一段范围"],
+  ["先压眼前最重的那一点", "先压可能外扩的那一条"],
+  ["想先把招成出来", "想先把底架打稳"],
+  ["先把界限立明", "先把相处养熟"],
+  ["会先让礼序起作用", "会先让现场起作用"],
+];
+
+function computeAffinityFrequency() {
+  const freq = initializeAffinity();
+  QUESTIONS.forEach((question) => {
+    question.options.forEach((option) => {
+      Object.entries(option.affinity || {}).forEach(([sectId, value]) => {
+        freq[sectId] += Math.abs(value);
+      });
+    });
+  });
+  return freq;
+}
+
+function computeAffinityWeights() {
+  const freq = computeAffinityFrequency();
+  const values = Object.values(freq).filter((value) => value > 0);
+  const median = values.sort((a, b) => a - b)[Math.floor(values.length / 2)] || 1;
+  return SECTS.reduce((acc, sect) => {
+    const count = Math.max(freq[sect.id] || 1, 1);
+    const ratio = median / count;
+    acc[sect.id] = clamp(Math.sqrt(ratio), 0.72, 1.42);
+    return acc;
+  }, {});
+}
+
+const AFFINITY_WEIGHTS = computeAffinityWeights();
+const RESULT_BLOCKS = [
+  { key: "opening", label: "起手", start: 0, end: 6 },
+  { key: "pressure", label: "救急", start: 6, end: 12 },
+  { key: "inheritance", label: "传承", start: 12, end: 18 },
+  { key: "collective", label: "共事", start: 18, end: 24 },
+  { key: "verdict", label: "落槌", start: 24, end: 30 },
 ];
 
 const state = {
   name: "少侠",
   index: 0,
   answers: Array(QUESTIONS.length).fill(null),
+  timings: Array(QUESTIONS.length).fill(null),
+  revisions: Array(QUESTIONS.length).fill(0),
+  questionStartAt: null,
+  questionTimerCapMs: 18000,
   result: null,
 };
 
@@ -1269,6 +770,8 @@ const refs = {
   playerName: document.querySelector("#playerName"),
   questionStage: document.querySelector("#questionStage"),
   progressLabel: document.querySelector("#progressLabel"),
+  timerLabel: document.querySelector("#timerLabel"),
+  timerFill: document.querySelector("#timerFill"),
   progressFill: document.querySelector("#progressFill"),
   questionScene: document.querySelector("#questionScene"),
   questionPrompt: document.querySelector("#questionPrompt"),
@@ -1280,6 +783,7 @@ const refs = {
   resultSectName: document.querySelector("#resultSectName"),
   resultSectTitle: document.querySelector("#resultSectTitle"),
   resultSummary: document.querySelector("#resultSummary"),
+  resultLoreExcerpt: document.querySelector("#resultLoreExcerpt"),
   resultTags: document.querySelector("#resultTags"),
   resultVerse: document.querySelector("#resultVerse"),
   resultCrest: document.querySelector("#resultCrest"),
@@ -1290,9 +794,34 @@ const refs = {
   shadowCopy: document.querySelector("#shadowCopy"),
   reasonList: document.querySelector("#reasonList"),
   resultRole: document.querySelector("#resultRole"),
+  swayCopy: document.querySelector("#swayCopy"),
   restartButton: document.querySelector("#restartButton"),
   radarChart: document.querySelector("#radarChart"),
 };
+
+let timerTicker = null;
+
+function startQuestionTimer() {
+  if (timerTicker) {
+    clearInterval(timerTicker);
+  }
+  timerTicker = setInterval(() => {
+    if (!state.questionStartAt) {
+      return;
+    }
+    const elapsedMs = performance.now() - state.questionStartAt;
+    const elapsed = elapsedMs / 1000;
+    refs.timerLabel.textContent = `本题用时 ${elapsed.toFixed(1)}s`;
+    refs.timerFill.style.width = `${Math.min(100, (elapsedMs / state.questionTimerCapMs) * 100)}%`;
+  }, 100);
+}
+
+function stopQuestionTimer() {
+  if (timerTicker) {
+    clearInterval(timerTicker);
+    timerTicker = null;
+  }
+}
 
 function renderSectCloud() {
   refs.sectCloud.innerHTML = "";
@@ -1316,11 +845,20 @@ function showQuiz() {
 }
 
 function showResult() {
+  stopQuestionTimer();
   refs.quizShell.classList.add("hidden");
   refs.resultShell.classList.remove("hidden");
 }
 
 function setAnswer(questionIndex, optionIndex) {
+  stopQuestionTimer();
+  const previous = state.answers[questionIndex];
+  if (previous !== null && previous !== optionIndex) {
+    state.revisions[questionIndex] += 1;
+  }
+
+  const elapsedMs = Math.max(200, performance.now() - (state.questionStartAt || performance.now()));
+  state.timings[questionIndex] = elapsedMs;
   state.answers[questionIndex] = optionIndex;
 
   if (questionIndex < QUESTIONS.length - 1) {
@@ -1335,13 +873,17 @@ function setAnswer(questionIndex, optionIndex) {
 
 function renderQuestion() {
   const question = QUESTIONS[state.index];
-  refs.questionStage.textContent = question.stage;
+  refs.questionStage.textContent = question.stage || `第${state.index + 1}程`;
   refs.progressLabel.textContent = `${String(state.index + 1).padStart(2, "0")} / ${QUESTIONS.length}`;
   refs.progressFill.style.width = `${((state.index + 1) / QUESTIONS.length) * 100}%`;
+  refs.timerLabel.textContent = "本题用时 0.0s";
+  refs.timerFill.style.width = "0%";
   refs.questionScene.textContent = question.scene;
   refs.questionPrompt.textContent = question.prompt;
   refs.questionContext.textContent = question.context;
   refs.optionsGrid.innerHTML = "";
+  state.questionStartAt = performance.now();
+  startQuestionTimer();
 
   question.options.forEach((option, optionIndex) => {
     const button = document.createElement("button");
@@ -1349,8 +891,7 @@ function renderQuestion() {
     button.className = "option-button";
     button.innerHTML = `
       <span class="option-index">${optionIndex + 1}</span>
-      <span class="option-title">${option.title}</span>
-      <span class="option-text">${option.text}</span>
+      <span class="option-text">${option.title}</span>
     `;
     button.addEventListener("click", () => setAnswer(state.index, optionIndex));
     refs.optionsGrid.append(button);
@@ -1409,17 +950,205 @@ function axisToPercent(value) {
   return Math.round(((value + 5) / 10) * 100);
 }
 
+function timingWeight(ms) {
+  const sec = clamp((ms || 9000) / 1000, 0.5, 45);
+  const fastBoost = sec <= 4 ? 0.2 : 0;
+  const slowPenalty = sec > 12 ? Math.min(0.28, (sec - 12) * 0.012) : 0;
+  return clamp(1 + fastBoost - slowPenalty, 0.72, 1.22);
+}
+
+function questionSway(ms, revisions) {
+  const sec = clamp((ms || 9000) / 1000, 0.5, 45);
+  const hesitationFactor = clamp((sec - 1.6) / 7.4, 0, 1);
+  const revisionFactor = clamp(revisions * 0.42, 0, 1);
+  return clamp(hesitationFactor * 0.72 + revisionFactor * 0.28, 0, 1);
+}
+
+function hashString(input) {
+  let hash = 2166136261;
+  for (let index = 0; index < input.length; index += 1) {
+    hash ^= input.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function axisSideLabel(axis) {
+  return axis.value >= 0 ? axis.label : axis.opposite;
+}
+
+function pickBySeed(seed, items, offset = 0) {
+  return items[(seed + offset) % items.length];
+}
+
+function buildChoiceEntries() {
+  return QUESTIONS.map((question, questionIndex) => {
+    const optionIndex = state.answers[questionIndex] ?? 0;
+    const option = question.options[optionIndex];
+    const timing = state.timings[questionIndex] || 0;
+    const revisions = state.revisions[questionIndex] || 0;
+    return {
+      questionIndex,
+      scene: question.scene,
+      prompt: question.prompt,
+      optionIndex,
+      optionTitle: option.title,
+      axes: option.axes,
+      echo: QUESTION_ECHOES[questionIndex]?.[optionIndex] || option.title,
+      timing,
+      revisions,
+      sway: questionSway(timing, revisions),
+    };
+  });
+}
+
+function buildNarrativeSeed(entries, topId = "") {
+  const answerPattern = entries.map((entry) => entry.optionIndex).join("");
+  const timingPattern = entries.map((entry) => Math.min(6, Math.floor((entry.timing || 0) / 1800))).join("");
+  const revisionPattern = entries.map((entry) => Math.min(3, entry.revisions || 0)).join("");
+  return hashString(`${topId}|${answerPattern}|${timingPattern}|${revisionPattern}`);
+}
+
+function buildSegmentLead(seed, options, offset = 0) {
+  return pickBySeed(seed, options, offset);
+}
+
+function buildAxisMicroTrait(axis, seed, offset = 0) {
+  const banks = {
+    discipline: [
+      ["先把次序立清", "不愿先被成规锁死"],
+      ["先把边界收稳", "先给活路和变通留口"],
+      ["更信训练与框架", "更信现场判断与活手"],
+    ],
+    compassion: [
+      ["会先照看波动最大的一端", "会先把代价切清楚"],
+      ["会先留出承接余地", "会先把损耗和风险压实"],
+      ["对别人的受力很敏感", "对结果和后果更敏感"],
+    ],
+    freedom: [
+      ["愿意让变数继续存在", "更愿意把长线先扎稳"],
+      ["会给新路和试错留口", "会优先确认落点与归处"],
+      ["需要空间才能看清方向", "更信守住一处后的复利"],
+    ],
+    ferocity: [
+      ["判断一成就会推进", "会给局面多留半步观察"],
+      ["更习惯把事情往前推", "更习惯先等时机自己浮上来"],
+      ["出手时不爱拖延", "出手前很重分寸和留白"],
+    ],
+    secrecy: [
+      ["喜欢把手段先藏住", "倾向把态度先摆明"],
+      ["会先留后手再动作", "会先让人知道你的边界在哪"],
+      ["能接受不被立刻看懂", "更愿意把话放在明面上"],
+    ],
+    culture: [
+      ["重视体面、表达和方式", "更看有没有用和能不能落地"],
+      ["会把气口和章法一起考虑", "会把效率和结果放在前头"],
+      ["相信表达本身会改变局面", "相信能成事比好不好看更重要"],
+    ],
+    faith: [
+      ["愿意替相信的东西多扛一步", "会先按局面反复校准"],
+      ["判断里带着明确的内在标准", "判断里带着很强的现实修正"],
+      ["一旦认准就不轻易后退", "除非条件足够明确否则不轻易押注"],
+    ],
+    kinship: [
+      ["会先顾共同体有没有被托住", "更能把关系和事情分开"],
+      ["天然会替自己人兜后果", "天然会把边界写得更清楚"],
+      ["做决定时会想到同路人的承受", "做决定时更少被关系牵着走"],
+    ],
+  };
+  const variants = banks[axis.key] || [[axis.positive, axis.negative]];
+  const [positive, negative] = pickBySeed(seed, variants, offset);
+  return axis.value >= 0 ? positive : negative;
+}
+
+function buildBlockProfiles(choiceEntries) {
+  return RESULT_BLOCKS.map((block) => {
+    const entries = choiceEntries.slice(block.start, block.end);
+    const vector = initializeVector();
+    entries.forEach((entry) => {
+      Object.entries(entry.axes || {}).forEach(([key, value]) => {
+        vector[key] += value * timingWeight(entry.timing);
+      });
+    });
+
+    const rankedAxes = AXES.map((axis) => ({
+      ...axis,
+      value: vector[axis.key] || 0,
+      strength: Math.abs(vector[axis.key] || 0),
+    })).sort((left, right) => right.strength - left.strength);
+
+    return {
+      ...block,
+      entries,
+      dominant: rankedAxes[0],
+      secondary: rankedAxes[1],
+      vector,
+    };
+  });
+}
+
+function buildBlockLine(block, seed, offset = 0) {
+  const lead = buildSegmentLead(
+    seed,
+    [
+      `${block.label}上，你`,
+      `放在${block.label}这组选择里，你`,
+      `到了${block.label}这一层，你`,
+    ],
+    offset,
+  );
+  const main = buildAxisMicroTrait(block.dominant, seed, offset + 1);
+  const sub = block.secondary && block.secondary.strength > 0.85 ? `，同时也${buildAxisMicroTrait(block.secondary, seed, offset + 2)}` : "";
+  return `${lead}${main}${sub}`;
+}
+
+function buildSectFitCopy(result) {
+  const topAxes = result.dominantAxes.slice(0, 2).map(axisSideLabel).join(" / ");
+  const block = result.blockProfiles[2];
+  return `${result.top.name}适合你的地方，在于它能把「${topAxes}」收进一套长期门风里。尤其落到${block.label}这一层时，你的取法和这门派最同路。`;
+}
+
+function optionSectFit(option, sect) {
+  const axisFit = AXES.reduce((sum, axis) => {
+    const choice = option.axes[axis.key] || 0;
+    return sum + choice * sect.profile[axis.key];
+  }, 0);
+  const affinityFit = (option.affinity?.[sect.id] || 0) * 3.1;
+  return axisFit + affinityFit;
+}
+
+function buildTopNarrative(result) {
+  const first = result.blockProfiles[0];
+  const second = result.blockProfiles[1];
+  const opener = buildSegmentLead(
+    result.narrativeSeed,
+    [
+      "你落到这个门派，不是因为表面气质像它，而是因为你的起手和它相合：",
+      "真正把你带到这里的，是你处理局面时那种稳定的底盘：",
+      "这份答卷最先露出来的，不是偏好，而是你的做事路数：",
+    ],
+    3,
+  );
+  return `${opener}${buildBlockLine(first, result.narrativeSeed, 5)}；${buildBlockLine(second, result.narrativeSeed, 8)}。`;
+}
+
 function calculateResult() {
   const rawAxes = initializeVector();
   const affinity = initializeAffinity();
+  let swayAccumulator = 0;
+  const choiceEntries = buildChoiceEntries();
 
   state.answers.forEach((optionIndex, questionIndex) => {
     const option = QUESTIONS[questionIndex].options[optionIndex];
+    const w = timingWeight(state.timings[questionIndex]);
+    const questionSwayScore = questionSway(state.timings[questionIndex], state.revisions[questionIndex]);
+    swayAccumulator += questionSwayScore;
     Object.entries(option.axes).forEach(([key, value]) => {
-      rawAxes[key] += value;
+      rawAxes[key] += value * w;
     });
     Object.entries(option.affinity || {}).forEach(([key, value]) => {
-      affinity[key] = (affinity[key] || 0) + value;
+      const weight = AFFINITY_WEIGHTS[key] || 1;
+      affinity[key] = (affinity[key] || 0) + value * w * weight;
     });
   });
 
@@ -1434,6 +1163,8 @@ function calculateResult() {
     strength: Math.abs(normalizedAxes[axis.key]),
   })).sort((a, b) => b.strength - a.strength);
 
+  const swayIndex = clamp(swayAccumulator / QUESTIONS.length, 0, 1);
+
   const ranked = SECTS.map((sect) => {
     const squaredDiff = AXES.reduce((sum, axis) => {
       const userValue = normalizedAxes[axis.key];
@@ -1444,7 +1175,7 @@ function calculateResult() {
     const distance = Math.sqrt(squaredDiff / AXES.length);
     const baseScore = 108 - distance * 13.8;
 
-    const signatureBoost = dominantAxes.slice(0, 3).reduce((sum, axis) => {
+    const dominantAxisBoost = dominantAxes.slice(0, 3).reduce((sum, axis) => {
       const sectValue = sect.profile[axis.key];
       const sameSide = Math.sign(axis.value) === Math.sign(sectValue);
       const userWeight = axis.strength / 5;
@@ -1457,9 +1188,19 @@ function calculateResult() {
       return sum;
     }, 0);
 
-    const totalScore = baseScore + affinity[sect.id] * 2.1 + signatureBoost;
+    const alignmentMatch = QUESTIONS.reduce((count, question, qIndex) => {
+      const leftFit = optionSectFit(question.options[0], sect);
+      const rightFit = optionSectFit(question.options[1], sect);
+      const preferred = leftFit >= rightFit ? 0 : 1;
+      return count + (state.answers[qIndex] === preferred ? 1 : 0);
+    }, 0);
+    const alignmentRate = alignmentMatch / QUESTIONS.length;
+    const alignmentBoost = (alignmentRate - 0.5) * 18;
+    const swayPenalty = swayIndex * 4.2;
+    const profileBoost = clamp((sect.profileMagnitude - 2.05) * 1.1, -1.2, 2.2);
+    const totalScore = baseScore + affinity[sect.id] * 1.72 + dominantAxisBoost + alignmentBoost + profileBoost - swayPenalty;
 
-    return { ...sect, score: totalScore };
+    return { ...sect, score: totalScore, alignmentRate };
   }).sort((a, b) => b.score - a.score);
 
   const topScore = ranked[0].score;
@@ -1474,10 +1215,19 @@ function calculateResult() {
     item.percent = index === 0 ? topPercent : percent;
   });
 
+  const narrativeSeed = buildNarrativeSeed(choiceEntries, ranked[0].id);
+  const blockProfiles = buildBlockProfiles(choiceEntries);
+
   return {
     normalizedAxes,
     rawAxes,
     dominantAxes,
+    swayIndex,
+    topAlignmentRate: ranked[0].alignmentRate,
+    topNarrative: "",
+    choiceEntries,
+    blockProfiles,
+    narrativeSeed,
     ranked,
     top: ranked[0],
   };
@@ -1492,17 +1242,105 @@ function describeAxis(axis, value) {
 }
 
 function buildPersonaCopy(result) {
-  const leads = result.dominantAxes.slice(0, 3);
-  const pieces = leads.map((axis) => (axis.value >= 0 ? axis.positive : axis.negative));
+  const first = result.dominantAxes[0];
+  const second = result.dominantAxes[1];
+  const third = result.dominantAxes[2];
+  const middleBlocks = result.blockProfiles.slice(1, 3);
+  const opener = buildSegmentLead(
+    result.narrativeSeed,
+    [
+      "放到人格底色上看，你不是单轴的人：",
+      "你的性格不像单一标签，更像几根绳拧在一起：",
+      "如果把这份答卷抽成人格结构，大致会是这样：",
+    ],
+    7,
+  );
 
-  return `${pieces[0]} ${pieces[1]} ${pieces[2]} 你这组答案更像 ${result.top.name} 的路子：能在冲突里保持自洽，也愿意为自己的选择承担后果。`;
+  return `${opener}你会把「${axisSideLabel(first)}」「${axisSideLabel(second)}」和「${axisSideLabel(third)}」放在同一次判断里。${buildBlockLine(middleBlocks[0], result.narrativeSeed, 11)}；${buildBlockLine(middleBlocks[1], result.narrativeSeed, 14)}。`;
 }
 
 function buildShadowCopy(result) {
   const major = result.dominantAxes[0];
   const riskCopy = major.value >= 0 ? major.positiveRisk : major.negativeRisk;
-  const tendency = major.value >= 0 ? major.label : major.opposite;
-  return `你的最强轴是「${tendency}」。它是你最锋利的武器，也最可能成为你的反身代价：${riskCopy}`;
+  const tendency = axisSideLabel(major);
+  const sharpestBlock = [...result.blockProfiles].sort((left, right) => right.dominant.strength - left.dominant.strength)[0];
+  const opener = buildSegmentLead(
+    result.narrativeSeed,
+    [
+      "你最容易走得过头的地方，也很清楚：",
+      "你的锋处和代价常常是同一处：",
+      "这份答卷里最需要自知的，不是优点，而是容易失手的那一面：",
+    ],
+    13,
+  );
+
+  return `${opener}当你把「${tendency}」推到最前面时，往往会在${sharpestBlock.label}这一层显得特别明显。${riskCopy}`;
+}
+
+function buildResultVerse(result) {
+  const lastTwoBlocks = result.blockProfiles.slice(3, 5);
+  const opener = buildSegmentLead(
+    result.narrativeSeed,
+    [
+      "门中批注：",
+      "门中批注：",
+      "门中批注：",
+    ],
+    19,
+  );
+
+  return `${opener}${buildBlockLine(lastTwoBlocks[0], result.narrativeSeed, 23)}；${buildBlockLine(lastTwoBlocks[1], result.narrativeSeed, 26)}。${buildSectFitCopy(result)}`;
+}
+
+function buildLoreExcerpt(result) {
+  const loreBase = result.top.loreLine || `你的取舍和${result.top.name}的长期门风是同一条线。`;
+  const stableBlocks = [...result.blockProfiles].sort((left, right) => right.dominant.strength - left.dominant.strength).slice(0, 2);
+  const opener = buildSegmentLead(
+    result.narrativeSeed,
+    [
+      "门派卷宗摘记：",
+      "门派卷宗摘记：",
+      "门派卷宗摘记：",
+    ],
+    29,
+  );
+
+  return `${opener}${loreBase} 你最稳定的两层做法，分别是：${buildBlockLine(stableBlocks[0], result.narrativeSeed, 31)}；${buildBlockLine(stableBlocks[1], result.narrativeSeed, 34)}。`;
+}
+
+function buildDecisiveMoments(result) {
+  return [...result.blockProfiles]
+    .sort((left, right) => right.dominant.strength - left.dominant.strength)
+    .slice(0, 2);
+}
+
+function buildDynamicReasonItems(result) {
+  const decisive = buildDecisiveMoments(result);
+  const hesitant = [...result.choiceEntries].sort((left, right) => {
+    const swayGap = right.sway - left.sway;
+    if (Math.abs(swayGap) > 0.001) {
+      return swayGap;
+    }
+    return (right.timing || 0) - (left.timing || 0);
+  })[0];
+
+  const items = [];
+
+  if (decisive.length) {
+    items.push({
+      title: `${result.top.name} · 稳定层`,
+      text: decisive.map((block) => `${block.label}上，你${buildAxisMicroTrait(block.dominant, result.narrativeSeed, block.start)}`).join("；"),
+    });
+  }
+
+  if (hesitant) {
+    items.push({
+      title: "答卷节奏",
+      text: `你停顿最长的一题，最后仍然选了「${hesitant.optionTitle}」。这说明你不是反复横跳，而是会把代价想全后再落子。`,
+    });
+  }
+
+  return items;
 }
 
 function applyTheme(sect) {
@@ -1514,6 +1352,7 @@ function applyTheme(sect) {
 function renderResult() {
   const result = state.result;
   const top = result.top;
+  result.topNarrative = buildTopNarrative(result);
 
   applyTheme(top);
   showResult();
@@ -1521,11 +1360,13 @@ function renderResult() {
   refs.resultNameplate.textContent = `${state.name || "少侠"} 的归属门派`;
   refs.resultSectName.textContent = top.name;
   refs.resultSectTitle.textContent = top.title;
-  refs.resultSummary.textContent = top.summary;
-  refs.resultVerse.textContent = top.verse;
+  refs.resultSummary.textContent = `${top.summary} ${result.topNarrative}`;
+  refs.resultLoreExcerpt.textContent = buildLoreExcerpt(result);
+  refs.resultVerse.textContent = buildResultVerse(result);
   refs.resultCrest.textContent = top.crest;
   refs.resultPercent.textContent = `${top.percent}%`;
   refs.resultRole.textContent = top.role;
+  refs.swayCopy.textContent = `摇摆度 ${Math.round(result.swayIndex * 100)}：依据停顿时长与改答次数估算，数值越高，表示你在同类冲突中更容易改换手法。`;
   refs.personaCopy.textContent = buildPersonaCopy(result);
   refs.shadowCopy.textContent = buildShadowCopy(result);
 
@@ -1550,6 +1391,12 @@ function renderResult() {
   });
 
   refs.reasonList.innerHTML = "";
+  buildDynamicReasonItems(result).forEach((reason) => {
+    const item = document.createElement("div");
+    item.className = "reason-item";
+    item.innerHTML = `<strong>${reason.title}</strong><span>${reason.text}</span>`;
+    refs.reasonList.append(item);
+  });
   top.reasons.forEach((reason) => {
     const item = document.createElement("div");
     item.className = "reason-item";
@@ -1664,8 +1511,12 @@ function drawRadar(values) {
 }
 
 function resetQuiz() {
+  stopQuestionTimer();
   state.index = 0;
   state.answers = Array(QUESTIONS.length).fill(null);
+  state.timings = Array(QUESTIONS.length).fill(null);
+  state.revisions = Array(QUESTIONS.length).fill(0);
+  state.questionStartAt = null;
   state.result = null;
   refs.resultShell.classList.add("hidden");
   refs.quizShell.classList.add("hidden");
@@ -1696,4 +1547,10 @@ window.addEventListener("resize", () => {
   }
 });
 
-renderSectCloud();
+async function bootstrap() {
+  const loreProfiles = await loadLoreProfiles();
+  enrichSectsWithLore(loreProfiles);
+  renderSectCloud();
+}
+
+bootstrap();

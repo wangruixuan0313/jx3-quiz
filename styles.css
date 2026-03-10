@@ -1,13 +1,13 @@
 :root {
-  --paper: #f1e8d8;
-  --paper-strong: #e9dcc4;
-  --ink: #1f2122;
-  --ink-soft: rgba(31, 33, 34, 0.72);
-  --line: rgba(56, 42, 27, 0.16);
-  --accent: #8a5b46;
-  --accent-soft: rgba(138, 91, 70, 0.16);
-  --accent-strong: #5e3b2d;
-  --shadow: 0 24px 80px rgba(48, 33, 20, 0.14);
+  --paper: #f4ecdf;
+  --paper-strong: #e8dbc4;
+  --ink: #1c1a18;
+  --ink-soft: rgba(28, 26, 24, 0.74);
+  --line: rgba(79, 55, 31, 0.18);
+  --accent: #8f5532;
+  --accent-soft: rgba(143, 85, 50, 0.2);
+  --accent-strong: #58321d;
+  --shadow: 0 24px 80px rgba(37, 23, 12, 0.2);
   --radius-xl: 36px;
   --radius-lg: 24px;
   --radius-md: 18px;
@@ -28,11 +28,39 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.4), transparent 32%),
-    radial-gradient(circle at bottom right, rgba(138, 91, 70, 0.1), transparent 28%),
-    linear-gradient(135deg, #efe4d0 0%, #e6d8bf 34%, #f4ebdd 100%);
+    radial-gradient(circle at 8% 6%, rgba(255, 255, 255, 0.58), transparent 30%),
+    radial-gradient(circle at 88% 14%, rgba(96, 82, 126, 0.13), transparent 26%),
+    radial-gradient(circle at 90% 80%, rgba(131, 72, 42, 0.14), transparent 29%),
+    repeating-linear-gradient(
+      -14deg,
+      rgba(70, 46, 28, 0.025) 0,
+      rgba(70, 46, 28, 0.025) 3px,
+      transparent 3px,
+      transparent 10px
+    ),
+    linear-gradient(132deg, #f6efe2 0%, #eadfc9 36%, #f8f2e7 100%);
   color: var(--ink);
-  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  font-family: "LXGW WenKai", "Kaiti SC", "STKaiti", "KaiTi", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+@keyframes mistShift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(0, -8px, 0) scale(1.02);
+  }
+}
+
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 button,
@@ -60,15 +88,17 @@ a {
 
 .ambient-left {
   background:
-    radial-gradient(circle at 12% 20%, rgba(167, 127, 97, 0.22), transparent 30%),
-    radial-gradient(circle at 0% 78%, rgba(62, 92, 88, 0.12), transparent 24%);
+    radial-gradient(circle at 12% 20%, rgba(154, 98, 62, 0.22), transparent 30%),
+    radial-gradient(circle at 0% 78%, rgba(58, 84, 122, 0.12), transparent 24%);
   opacity: 0.9;
+  animation: mistShift 12s ease-in-out infinite alternate;
 }
 
 .ambient-right {
   background:
-    radial-gradient(circle at 92% 18%, rgba(61, 84, 128, 0.12), transparent 22%),
-    radial-gradient(circle at 86% 74%, rgba(138, 91, 70, 0.18), transparent 28%);
+    radial-gradient(circle at 92% 18%, rgba(61, 84, 128, 0.16), transparent 22%),
+    radial-gradient(circle at 86% 74%, rgba(138, 91, 70, 0.2), transparent 28%);
+  animation: mistShift 14s ease-in-out infinite alternate-reverse;
 }
 
 .grain {
@@ -91,6 +121,7 @@ a {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
   padding: 40px 0 64px;
+  animation: revealUp 560ms ease both;
 }
 
 .hero {
@@ -112,8 +143,8 @@ a {
   overflow: hidden;
   border: 1px solid var(--line);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(255, 255, 255, 0.22)),
-    rgba(244, 235, 221, 0.8);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.24)),
+    rgba(244, 235, 221, 0.84);
   box-shadow: var(--shadow);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -128,6 +159,23 @@ a {
 
 .hero-copy {
   padding: 36px 36px 34px;
+}
+
+.hero-copy::after {
+  content: "大唐";
+  position: absolute;
+  top: 22px;
+  right: 20px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, var(--accent-strong) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-strong) 25%, transparent);
+  background: color-mix(in srgb, var(--accent-soft) 68%, rgba(255, 255, 255, 0.5));
 }
 
 .hero-copy::before,
@@ -173,6 +221,7 @@ a {
 .hero h1 {
   font-size: clamp(3rem, 7vw, 5.4rem);
   max-width: 11ch;
+  text-wrap: balance;
 }
 
 .hero-lead,
@@ -225,6 +274,13 @@ a {
 .sect-chip {
   padding: 8px 12px;
   font-size: 0.9rem;
+  transition: transform var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.sect-chip:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 34%, transparent);
+  background: color-mix(in srgb, var(--accent-soft) 60%, rgba(255, 255, 255, 0.6));
 }
 
 .panel-note {
@@ -302,7 +358,8 @@ a {
   color: #fff8f0;
   background:
     linear-gradient(135deg, var(--accent-strong), var(--accent));
-  box-shadow: 0 18px 34px rgba(94, 59, 45, 0.22);
+  box-shadow: 0 18px 34px color-mix(in srgb, var(--accent) 35%, transparent);
+  letter-spacing: 0.08em;
 }
 
 .primary-button:hover,
@@ -344,7 +401,7 @@ a {
 .progress-meta {
   justify-self: stretch;
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .progress-label {
@@ -358,12 +415,32 @@ a {
   overflow: hidden;
 }
 
+.timer-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(56, 42, 27, 0.08);
+  overflow: hidden;
+}
+
+#timerLabel {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
 .progress-fill {
   width: 0;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, rgba(138, 91, 70, 0.4), var(--accent));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 28%, #ffffff), var(--accent));
   transition: width 300ms ease;
+}
+
+.timer-fill {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, #ffffff), color-mix(in srgb, var(--accent-strong) 88%, #000000 0%));
+  transition: width 120ms linear;
 }
 
 .question-card {
@@ -396,6 +473,7 @@ a {
   border: 1px solid rgba(56, 42, 27, 0.12);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(247, 239, 229, 0.62));
+  border-left: 5px solid color-mix(in srgb, var(--accent) 40%, transparent);
   cursor: pointer;
   text-align: left;
   transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
@@ -422,14 +500,19 @@ a {
   display: block;
   margin-top: 16px;
   font-family: "Songti SC", "STSong", "SimSun", serif;
-  font-size: 1.28rem;
+  font-size: 1.08rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-strong);
 }
 
 .option-text {
   display: block;
-  margin-top: 10px;
-  color: var(--ink-soft);
-  line-height: 1.85;
+  margin-top: 14px;
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  color: var(--ink);
+  line-height: 1.18;
+  text-wrap: balance;
 }
 
 .nav-row {
@@ -471,6 +554,15 @@ a {
   overflow: hidden;
 }
 
+.result-main::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border-radius: calc(var(--radius-xl) - 8px);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  pointer-events: none;
+}
+
 .result-main::after {
   content: "";
   position: absolute;
@@ -508,6 +600,19 @@ a {
   z-index: 1;
   max-width: 52ch;
   margin-top: 18px;
+}
+
+.result-lore-excerpt {
+  position: relative;
+  z-index: 1;
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  max-width: 58ch;
+  border-left: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent-soft) 46%, rgba(255, 255, 255, 0.62));
+  color: var(--ink-soft);
+  line-height: 1.78;
 }
 
 .result-tags {
@@ -653,6 +758,7 @@ a {
   border-radius: 24px;
   background:
     radial-gradient(circle at center, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.16));
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .chart-wrap canvas {
@@ -755,6 +861,14 @@ a {
     max-width: none;
   }
 
+  .hero-copy::after {
+    width: 62px;
+    height: 62px;
+    top: 16px;
+    right: 14px;
+    font-size: 0.9rem;
+  }
+
   .options-grid,
   .axis-grid,
   .actions-row {
@@ -778,6 +892,11 @@ a {
 
   .result-subtitle {
     font-size: 1.72rem;
+  }
+
+  .result-lore-excerpt {
+    font-size: 0.92rem;
+    line-height: 1.72;
   }
 
   .quote-card {

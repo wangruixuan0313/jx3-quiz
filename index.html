@@ -22,11 +22,11 @@
             <p class="eyebrow">原创世界观化人格问卷</p>
             <h1>大唐山门试帖</h1>
             <p class="hero-lead">
-              这不是门规背诵，也不是剧情复写。它把你放进二十二段风雨里，看你如何取舍秩序、情义、锋芒与隐忍，最后给出最契合的江湖归处。
+              这不是门规背诵，也不是剧情复写。它把你放进三十段剑网3江湖抉择里，看你在不同地图、门派与人情局面中如何取舍，并结合你的作答节奏给出更细化的门派归属。
             </p>
             <div class="hero-meta">
               <span>20 个门派结果</span>
-              <span>22 道原创情境题</span>
+              <span>30 道二选一情境题</span>
               <span>桌面端 / 手机端均可完成</span>
             </div>
           </div>
@@ -80,7 +80,11 @@
               <h2 id="questionStage">第一程</h2>
             </div>
             <div class="progress-meta">
-              <span id="progressLabel">01 / 22</span>
+              <span id="progressLabel">01 / 30</span>
+              <span id="timerLabel">本题用时 0.0s</span>
+              <div class="timer-track" aria-hidden="true">
+                <div class="timer-fill" id="timerFill"></div>
+              </div>
               <div class="progress-track" aria-hidden="true">
                 <div class="progress-fill" id="progressFill"></div>
               </div>
@@ -111,11 +115,12 @@
               <h2 id="resultSectName"></h2>
               <p class="result-subtitle" id="resultSectTitle"></p>
               <p class="result-summary" id="resultSummary"></p>
+              <p class="result-lore-excerpt" id="resultLoreExcerpt"></p>
 
               <div class="result-tags" id="resultTags"></div>
 
               <div class="quote-card">
-                <p class="quote-mark">签</p>
+                <p class="quote-mark">判</p>
                 <p id="resultVerse"></p>
               </div>
             </div>
@@ -161,6 +166,7 @@
               <div class="role-card">
                 <p class="panel-title">你在队伍里的位置</p>
                 <strong id="resultRole"></strong>
+                <p class="helper-copy" id="swayCopy"></p>
               </div>
             </section>
           </div>
